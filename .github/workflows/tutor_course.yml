@@ -1,0 +1,22 @@
+name: Tutor Course
+
+on:
+  push:
+    branches: [ "tutor-course" ]
+  pull_request:
+    branches: [ "tutor-course" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
