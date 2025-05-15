@@ -10,6 +10,12 @@ pub enum CustomError {
     InvalidInputData(String),
 }
 
+impl PartialEq for CustomError {
+    fn eq(&self, other: &Self) -> bool {
+        self.to_string() == other.to_string()
+    }
+}
+
 impl Display for CustomError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

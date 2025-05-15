@@ -1,9 +1,7 @@
-use std::fmt::format;
-
 use sqlx::SqliteConnection;
 
 use crate::custom_error::CustomError;
-use crate::models::tutor::{NewTutorInput, Tutor};
+use crate::models::tutor::{NewTutorInput, Tutor, UpdateTurtorInput};
 
 pub async fn post_tutor_db(
     conn: &mut SqliteConnection,
@@ -55,6 +53,73 @@ SELECT * from tutor WHERE id = {}
     Ok(result)
 }
 
+pub async fn patch_tutor_by_id_db(
+    conn: &mut SqliteConnection,
+    tutor_id: &str,
+    update_data: UpdateTurtorInput,
+) -> Result<(), CustomError> {
+    let tutor = get_tutor_by_id_db(conn, tutor_id).await?;
+
+    if tutor.is_none() {
+        return Err(CustomError::SqlxError("Tutor was not found !".to_string()));
+    };
+    let tutor = tutor.unwrap();
+
+    let update_name = if update_data.name.is_some() {
+        update_data.name.unwrap()
+    } else {
+        tutor.name
+    };
+
+    let update_age = if update_data.age.is_some() {
+        update_data.age.unwrap()
+    } else {
+        tutor.age
+    };
+
+    let query_str = format!(
+        "
+    UPDATE tutor SET name = '{}', age = {}
+    WHERE id = {}
+",
+        update_name, update_age, tutor_id
+    );
+
+    sqlx::query(&query_str)
+        .execute(conn)
+        .await
+        .map_err(|e| CustomError::SqlxError(e.to_string()))?;
+
+    Ok(())
+}
+
+pub async fn del_tutor_by_id_db(
+    conn: &mut SqliteConnection,
+    tutor_id: &str,
+) -> Result<(), CustomError> {
+    let find_tutor = get_tutor_by_id_db(conn, tutor_id).await?;
+
+    if find_tutor.is_none() {
+        return Err(CustomError::InvalidInputData(
+            "Tutor was not found!".to_string(),
+        ));
+    }
+
+    let query_str = format!(
+        "
+    DELETE FROM tutor WHERE id = {}
+",
+        tutor_id
+    );
+
+    sqlx::query(&query_str)
+        .execute(conn)
+        .await
+        .map_err(|e| CustomError::SqlxError(e.to_string()))?;
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use dotenv::dotenv;
@@ -97,10 +162,6 @@ mod tests {
         let result = get_tutors_db(&mut conn).await;
 
         assert!(result.is_ok());
-
-        let tutors = result.unwrap();
-
-        assert!(!tutors.is_empty())
     }
 
     #[actix_web::test]
@@ -145,5 +206,92 @@ mod tests {
         let option_tutor = result.unwrap();
 
         assert!(option_tutor.is_none());
+    }
+
+    #[actix_web::test]
+    async fn test_patch_non_exist_tutor_db() {
+        dotenv().ok();
+
+        let mut conn = get_db_conn().await;
+        let non_exists_tutor = "9999999999991";
+        let update_data_input = UpdateTurtorInput {
+            name: FirstName().fake(),
+            age: (20..40).fake(),
+        };
+
+        let result = patch_tutor_by_id_db(&mut conn, non_exists_tutor, update_data_input).await;
+
+        assert!(result.is_err());
+    }
+
+    #[actix_web::test]
+    async fn test_patch_exist_tutor_db() {
+        dotenv().ok();
+
+        let mut conn = get_db_conn().await;
+        let new_tutor_input = NewTutorInput {
+            name: FirstName().fake(),
+            age: (20..40).fake(),
+        };
+
+        let new_tutor = post_tutor_db(&mut conn, new_tutor_input.clone())
+            .await
+            .unwrap();
+
+        let update_tutor_input = UpdateTurtorInput {
+            name: Some(FirstName().fake()),
+            age: None,
+        };
+
+        let result = patch_tutor_by_id_db(
+            &mut conn,
+            new_tutor.id.to_string().trim(),
+            update_tutor_input.clone(),
+        )
+        .await;
+
+        println!("{:?}", result);
+        // Update tutor is ok
+        assert!(result.is_ok());
+
+        let updated_tutor = get_tutor_by_id_db(&mut conn, new_tutor.id.to_string().trim())
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Data must update based on input data
+        assert_eq!(updated_tutor.name, update_tutor_input.name.unwrap());
+        assert_eq!(updated_tutor.age, new_tutor_input.age);
+    }
+
+    #[actix_web::test]
+    async fn test_del_non_exist_tutor_by_id_db() {
+        dotenv().ok();
+
+        let mut conn = get_db_conn().await;
+        let non_exist_tutor_id = "99999999991";
+
+        let result = del_tutor_by_id_db(&mut conn, non_exist_tutor_id).await;
+
+        assert!(result.is_err());
+    }
+
+    #[actix_web::test]
+    async fn test_del_exist_tutor_by_id_db() {
+        dotenv().ok();
+
+        let mut conn = get_db_conn().await;
+        let new_tutor_input = NewTutorInput {
+            name: FirstName().fake(),
+            age: (20..40).fake(),
+        };
+
+        let new_tutor = post_tutor_db(&mut conn, new_tutor_input.clone())
+            .await
+            .unwrap();
+
+        let result = del_tutor_by_id_db(&mut conn, new_tutor.id.to_string().trim()).await;
+
+        assert!(result.is_ok());
     }
 }

@@ -1,3 +1,5 @@
+use std::clone;
+
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::{DateTime, Utc};
 
@@ -21,7 +23,7 @@ impl NewTutorInput {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct UpdateTurtorInput {
     pub name: Option<String>,
     pub age: Option<i32>,
