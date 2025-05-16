@@ -29,8 +29,8 @@ impl Display for CustomError {
 impl Error for CustomError {}
 
 #[derive(Serialize)]
-struct CustomErrorResponse {
-    error_message: String,
+pub struct CustomErrorResponse {
+    pub error_message: String,
 }
 
 impl ResponseError for CustomError {

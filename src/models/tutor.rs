@@ -1,5 +1,6 @@
 use std::clone;
 
+use actix_web::web::Json;
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::{DateTime, Utc};
 
@@ -23,8 +24,38 @@ impl NewTutorInput {
     }
 }
 
+impl From<Json<NewTutorInput>> for NewTutorInput {
+    fn from(value: Json<NewTutorInput>) -> Self {
+        Self {
+            name: value.name.clone(),
+            age: value.age,
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct UpdateTurtorInput {
     pub name: Option<String>,
     pub age: Option<i32>,
+}
+
+impl From<Json<UpdateTurtorInput>> for UpdateTurtorInput {
+    fn from(value: Json<UpdateTurtorInput>) -> Self {
+        Self {
+            name: {
+                if let Some(name) = value.name.clone() {
+                    Some(name)
+                } else {
+                    None
+                }
+            },
+            age: {
+                if let Some(age) = value.age {
+                    Some(age)
+                } else {
+                    None
+                }
+            },
+        }
+    }
 }
