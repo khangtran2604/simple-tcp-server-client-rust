@@ -4,7 +4,7 @@ use actix_web::{
 };
 use custom_error::CustomError;
 use dotenv::dotenv;
-use routes::tutor::tutor_routes;
+use routes::{course::course_routes, tutor::tutor_routes};
 use seeds::{course::create_course_table, tutor::create_tutor_table};
 use state::AppState;
 use std::io::Result;
@@ -55,6 +55,7 @@ async fn main() -> Result<()> {
                     .into()
             }))
             .configure(tutor_routes)
+            .configure(course_routes)
     })
     .bind(("127.0.0.1", 4000))?
     .run()
