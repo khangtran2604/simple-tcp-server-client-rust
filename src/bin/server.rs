@@ -5,7 +5,7 @@ use actix_web::{
 use custom_error::CustomError;
 use dotenv::dotenv;
 use routes::{course::course_routes, tutor::tutor_routes};
-use seeds::{course::create_course_table, tutor::create_tutor_table};
+use seeds::{course::create_course_table, seed_tables, tutor::create_tutor_table};
 use state::AppState;
 use std::io::Result;
 
@@ -40,8 +40,7 @@ async fn main() -> Result<()> {
     // Seedings
     {
         let mut conn = shared_data.conn.lock().unwrap();
-        create_tutor_table(&mut conn).await;
-        create_course_table(&mut conn).await;
+        seed_tables(&mut conn).await;
         // MutexGuard is dropped here at the end of this scope
     }
 

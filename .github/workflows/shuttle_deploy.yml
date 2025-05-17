@@ -10,19 +10,17 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build
-        run: cargo build --verbose
-      - name: Run tests
-        run: cargo test --verbose
   deploy:
     runs-on: ubuntu-latest
     environment: shuttle
     steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build --release
+      - name: Run tests
+        run: cargo test
       - uses: shuttle-hq/deploy-action@v2
+        name: Deploy
         with:
           shuttle-api-key: ${{ secrets.SHUTTLE_API_KEY }}
           project-id: ${{ vars.SHUTTLE_PROJECT_ID }}
