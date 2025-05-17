@@ -14,3 +14,14 @@ pub async fn create_tutor_table(conn: &mut SqliteConnection) {
 
     println!("Tutor table is created !")
 }
+
+pub async fn create_first_tutor(conn: &mut SqliteConnection) {
+    let create_table_sql = "
+        INSERT INTO tutor (name, age)
+        VALUES ('First Tutor', 30);
+    ";
+
+    sqlx::query(create_table_sql).execute(conn).await.unwrap();
+
+    println!("First tutor is created !")
+}

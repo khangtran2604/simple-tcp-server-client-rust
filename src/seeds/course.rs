@@ -18,3 +18,14 @@ pub async fn create_course_table(conn: &mut SqliteConnection) {
 
     println!("Course table is created !")
 }
+
+pub async fn create_first_course(conn: &mut SqliteConnection) {
+    let create_table_sql = "
+        INSERT INTO course (tutor_id, name, description)
+        VALUES (1, 'First Course', 'This is the first course');
+    ";
+
+    sqlx::query(create_table_sql).execute(conn).await.unwrap();
+
+    println!("The first course is created !")
+}
